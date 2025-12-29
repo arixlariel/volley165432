@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Volley165432 | Pro Tactician</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@700&family=Inter:wght@400;900&display=swap" rel="stylesheet">
+    <style>
+        :root { --court-orange: #ff6a00; --court-gray: #475569; --highlight-yellow: #facc15; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at center, #020617 0%, #000000 100%);
+            color: #f1f5f9;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .title-font { font-family: 'Syncopate', sans-serif; }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .player-node {
+            transition: all 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 900; cursor: pointer;
+            width: 70px; height: 70px;
+            border-radius: 9999px;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.5);
+            z-index: 50;
+        }
+
+        .active-highlight {
+            background-color: var(--highlight-yellow) !important;
+            color: #000 !important;
+            z-index: 100;
+            transform: translate(-50%, -50%) scale(1.1) !important;
+        }
+
+        .btn-export, .dropdown-item { 
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); 
+            cursor: pointer;
+            position: relative;
+        }
+        .btn-export:hover, .dropdown-item:hover { 
+            filter: brightness(1.2);
+            transform: translateX(4px);
+        }
+
+        .menu-container { position: relative; z-index: 1001; }
+        .dropdown-menu {
+            display: block; opacity: 0; visibility: hidden;
+            position: absolute; top: 100%; right: 0;
+            background: #0f172a; border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px; padding: 0.75rem; min-width: 170px;
+            z-index: 2000 !important; 
+            box-shadow: 0 25px 50px rgba(0,0,0,0.9);
+            /* Espacio añadido para que no toque los botones */
+            margin-top: 12px; 
+            transition: opacity 0.2s ease, visibility 0s linear 0.4s;
+        }
+        .menu-container:hover .dropdown-menu { 
+            opacity: 1; visibility: visible; 
+            transition-delay: 0s; 
+        }
+
+        .dropdown-item {
+            width: 100%; text-align: left; padding: 8px 12px;
+            border-radius: 6px; font-size: 11px; font-weight: 900;
+            margin-bottom: 4px; text-transform: uppercase;
+        }
+
+        .volleyball-net {
+            background-color: rgba(0, 0, 0, 0.4); 
+            background-image: 
+                repeating-linear-gradient(45deg, rgba(255,255,255,0.25) 0px, rgba(255,255,255,0.25) 1.5px, transparent 1.5px, transparent 12px),
+                repeating-linear-gradient(-45deg, rgba(255,255,255,0.25) 0px, rgba(255,255,255,0.25) 1.5px, transparent 1.5px, transparent 12px),
+                linear-gradient(90deg, rgba(255,255,255,0.4) 1.5px, transparent 1.5px),
+                linear-gradient(0deg, rgba(255,255,255,0.4) 1.5px, transparent 1.5px);
+            border-top: 4px solid #ffffff;
+            border-bottom: 4px solid #ffffff;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .player-label {
+            position: absolute; left: 80px; top: 50%;
+            transform: translateY(-50%); background: #000000;
+            color: #ffffff; font-size: 15px; padding: 4px 10px;
+            border-radius: 4px; white-space: nowrap; pointer-events: none;
+            text-transform: uppercase; font-weight: 900;
+            border: 2px solid rgba(255, 255, 255, 0.3); z-index: 110;
+        }
+
+        .name-edit-input {
+            position: absolute; left: 80px; top: 50%;
+            transform: translateY(-50%); z-index: 200; background: #000;
+            border: 2px solid var(--court-orange); color: white;
+            padding: 4px 10px; border-radius: 4px; width: 130px;
+            outline: none; text-transform: uppercase; font-size: 15px;
+        }
+
+        .hover-rot-top:hover { color: var(--court-gray) !important; cursor: pointer; }
+        .hover-rot-bottom:hover { color: var(--court-orange) !important; cursor: pointer; }
+        .hover-high:hover { color: var(--highlight-yellow) !important; cursor: pointer; }
+
+        .circle-btn {
+            width: 40px; height: 40px; border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.2);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.3s;
+        }
+        .circle-btn:hover { background: white; color: black; transform: scale(1.1); }
+
+        #info-popup {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
+            z-index: 5000; align-items: center; justify-content: center;
+        }
+        #info-popup.active { display: flex; }
+        .popup-box {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            border: 3px solid #ff6a00;
+            padding: 2rem; border-radius: 2rem; 
+            max-width: 500px; width: 90%; 
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7);
+            transform: scale(0.9); opacity: 0; 
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        #info-popup.active .popup-box { transform: scale(1); opacity: 1; }
+        .legend-item {
+            padding: 10px 16px; font-size: 14px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px; margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body class="flex flex-col">
+
+<div id="info-popup" onclick="toggleInfo(false)">
+    <div class="popup-box" onclick="event.stopPropagation()">
+        <div class="flex flex-col items-center mb-5">
+            <div class="w-12 h-1 bg-orange-500 rounded-full mb-3 opacity-50"></div>
+            <h2 class="title-font text-white text-xl tracking-widest text-center uppercase">Leyenda</h2>
+        </div>
+        <ul class="space-y-2 font-black">
+            <li class="legend-item flex justify-between items-center"><span class="text-blue-400">S</span> <span class="text-slate-200">COLOCADOR</span></li>
+            <li class="legend-item flex justify-between items-center"><span class="text-blue-400">WS</span> <span class="text-slate-200">CUATRERO</span></li>
+            <li class="legend-item flex justify-between items-center"><span class="text-blue-400">MB</span> <span class="text-slate-200">CENTRAL</span></li>
+            <li class="legend-item flex justify-between items-center"><span class="text-blue-400">O</span> <span class="text-slate-200">OPUESTO</span></li>
+            <li class="legend-item flex justify-between items-center"><span class="text-blue-400">L</span> <span class="text-slate-200">LIBERO</span></li>
+        </ul>
+        <button onclick="toggleInfo(false)" class="mt-6 w-full py-3 bg-orange-600 rounded-xl font-black text-sm uppercase tracking-widest text-white shadow-xl">Cerrar</button>
+    </div>
+</div>
+
+<header class="py-2 px-6 flex justify-between items-center border-b border-white/5 glass-panel shrink-0 h-16 relative z-[2000]">
+    <div class="flex items-center gap-3">
+        <div id="master-mute-control" class="cursor-pointer transition-transform hover:scale-110">
+            <svg width="45" height="45" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="48" fill="#f97316" stroke="white" stroke-width="2"/>
+                <path d="M25 25 C 40 40, 60 40, 75 25 M25 75 C 40 60, 60 60, 75 75 M50 2 C 50 40, 50 60, 50 98" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                <circle id="mute-dot" cx="85" cy="15" r="10" fill="#22c55e" stroke="#000" stroke-width="2"/>
+            </svg>
+        </div>
+        <div>
+            <h1 class="title-font text-lg tracking-tighter bg-gradient-to-r from-white via-orange-300 to-orange-600 bg-clip-text text-transparent">VOLLEY165432</h1>
+            <p class="text-[8px] uppercase tracking-[0.4em] text-slate-500 font-bold">v7.11 XTREME MOVE</p>
+        </div>
+        <div class="flex gap-3 ml-4">
+            <div class="circle-btn text-xl font-serif italic text-green-500" onclick="toggleInfo(true)">i</div>
+            <div class="circle-btn" onclick="clearNames('top')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+            </div>
+            <div class="circle-btn" onclick="clearNames('bottom')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--court-orange)"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+            </div>
+        </div>
+    </div>
+    
+    <div class="flex gap-3">
+        <div class="menu-container">
+            <button class="px-4 py-1.5 bg-slate-800 border border-white/10 rounded-md text-[13px] font-black text-white hover:bg-slate-700 transition-all uppercase tracking-widest">Exportar ↑</button>
+            <div class="dropdown-menu">
+                <button onclick="exportNames('top')" class="dropdown-item bg-slate-600 text-white">Gris</button>
+                <button onclick="exportNames('bottom')" class="dropdown-item bg-orange-600 text-white">Naranja</button>
+                <button onclick="exportNames('all')" class="dropdown-item bg-white text-black">Partido</button>
+            </div>
+        </div>
+        <div class="menu-container">
+            <button class="px-4 py-1.5 bg-slate-800 border border-white/10 rounded-md text-[13px] font-black text-white hover:bg-slate-700 transition-all uppercase tracking-widest">Importar ↓</button>
+            <div class="dropdown-menu">
+                <button onclick="triggerImport('top')" class="dropdown-item bg-slate-600 text-white">Gris</button>
+                <button onclick="triggerImport('bottom')" class="dropdown-item bg-orange-600 text-white">Naranja</button>
+                <button onclick="triggerImport('all')" class="dropdown-item bg-white text-black">Partido</button>
+            </div>
+        </div>
+        <div class="menu-container">
+            <button class="px-4 py-1.5 bg-orange-600 rounded-md text-[13px] font-black text-white shadow-lg uppercase tracking-widest">PNG</button>
+            <div class="dropdown-menu">
+                <button onclick="exportPart('top')" class="dropdown-item bg-slate-600 text-white">Gris</button>
+                <button onclick="exportPart('bottom')" class="dropdown-item bg-orange-600 text-white">Naranja</button>
+                <button onclick="exportCapture()" class="dropdown-item bg-white text-black">Partido</button>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main id="capture-area" class="flex-1 max-w-[1800px] mx-auto w-full p-4 grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch overflow-hidden relative z-0">
+    <aside class="lg:col-span-2 flex flex-col gap-4 py-3 relative z-10">
+        <div class="glass-panel rounded-2xl p-4 border-l-4 border-slate-500 flex-1 flex flex-col">
+            <span class="text-[22px] font-black tracking-widest text-slate-400 block mb-2 text-center uppercase">C.V. GRIS</span>
+            <div class="grid grid-cols-2 gap-4 flex-1">
+                <div class="flex flex-col gap-2">
+                    <span onclick="autoRotate('top')" class="hover-rot-top text-[16px] uppercase font-bold text-slate-600 text-center mb-1">Rotación</span>
+                    <div id="rot-grid-top" class="flex flex-col gap-2 flex-1 justify-between"></div>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <span onclick="toggleAllHighlights('top')" class="hover-high text-[16px] uppercase font-bold text-slate-600 text-center mb-1">Highlight</span>
+                    <div id="pos-grid-top" class="flex flex-col gap-2 flex-1 justify-between"></div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <section class="lg:col-span-8 flex flex-col items-center justify-center relative z-0">
+        <div id="court-canvas" class="w-full max-w-5xl relative aspect-[16/10] rounded-xl overflow-hidden bg-slate-900 border-4 border-slate-800">
+            <div id="capture-top" class="absolute top-0 left-0 w-full h-1/2 bg-slate-800/70 border-b-2 border-white/10">
+                <div id="top-layer" class="relative w-full h-full" style="transform: rotate(180deg);"></div>
+            </div>
+            <div id="capture-bottom" class="absolute bottom-0 left-0 w-full h-1/2 bg-orange-500/40 border-t-2 border-white/10">
+                <div id="bottom-layer" class="relative w-full h-full"></div>
+            </div>
+            <div class="volleyball-net absolute top-1/2 left-0 w-full h-10 -translate-y-1/2 z-[60]"></div>
+        </div>
+    </section>
+
+    <aside class="lg:col-span-2 flex flex-col gap-4 py-3 relative z-10">
+        <div class="glass-panel rounded-2xl p-4 border-r-4 border-orange-500 flex-1 flex flex-col">
+            <span class="text-[22px] font-black tracking-widest text-orange-500 block mb-2 text-center uppercase">C.V. NARANJA</span>
+            <div class="grid grid-cols-2 gap-4 flex-1">
+                <div class="flex flex-col gap-2">
+                    <span onclick="autoRotate('bottom')" class="hover-rot-bottom text-[16px] uppercase font-bold text-slate-600 text-center mb-1">Rotación</span>
+                    <div id="rot-grid-bottom" class="flex flex-col gap-2 flex-1 justify-between"></div>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <span onclick="toggleAllHighlights('bottom')" class="hover-high text-[16px] uppercase font-bold text-slate-600 text-center mb-1">Highlight</span>
+                    <div id="pos-grid-bottom" class="flex flex-col gap-2 flex-1 justify-between"></div>
+                </div>
+            </div>
+        </div>
+    </aside>
+</main>
+
+<input type="file" id="import-file" style="display:none" accept=".json">
+
+<script>
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    let isMuted = false;
+    const baseOrder = ['S', 'WS1', 'MB1', 'O', 'WS2', 'MB2'];
+    const rotationSequence = [1, 6, 5, 4, 3, 2];
+    const rolesList = ['S', 'WS1', 'WS2', 'MB1', 'MB2', 'O', 'L'];
+    const coords = {
+        1: { x: 80, y: 75 }, 6: { x: 50, y: 75 }, 5: { x: 20, y: 75 },
+        2: { x: 80, y: 25 }, 3: { x: 50, y: 25 }, 4: { x: 20, y: 25 }
+    };
+    const state = { top: { rot: 1, highlights: new Set() }, bottom: { rot: 1, highlights: new Set() } };
+    let playerNames = {
+        top: { 'S': '', 'WS1': '', 'WS2': '', 'MB1': '', 'MB2': '', 'O': '', 'L': '' },
+        bottom: { 'S': '', 'WS1': '', 'WS2': '', 'MB1': '', 'MB2': '', 'O': '', 'L': '' }
+    };
+
+    function playSound(freq, type, duration, vol=0.05) {
+        if (isMuted) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(); osc.stop(audioCtx.currentTime + duration);
+    }
+
+    function toggleInfo(show) {
+        const pop = document.getElementById('info-popup');
+        if(show) pop.classList.add('active'); else pop.classList.remove('active');
+    }
+
+    function clearNames(team) {
+        Object.keys(playerNames[team]).forEach(k => playerNames[team][k] = '');
+        playSound(200, 'square', 0.2);
+        render(team);
+    }
+
+    function exportNames(scope) {
+        let data = scope === 'all' ? playerNames : playerNames[scope];
+        const blob = new Blob([JSON.stringify(data)], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const scopeName = scope === 'bottom' ? 'bot' : scope;
+        a.href = url; a.download = `names_${scopeName}.json`;
+        a.click();
+    }
+
+    let currentImportScope = 'all';
+    function triggerImport(scope) {
+        currentImportScope = scope;
+        document.getElementById('import-file').click();
+    }
+
+    document.getElementById('import-file').onchange = function(e) {
+        const reader = new FileReader();
+        reader.onload = function() {
+            try {
+                const json = JSON.parse(reader.result);
+                if (currentImportScope === 'all') playerNames = json;
+                else playerNames[currentImportScope] = json;
+                render('top'); render('bottom');
+                playSound(800, 'sine', 0.2);
+            } catch (err) { alert("Error al leer el archivo"); }
+        };
+        reader.readAsText(e.target.files[0]);
+    };
+
+    function getFormation(rot) {
+        const zones = [1, 2, 3, 4, 5, 6];
+        const targetZoneIndex = zones.indexOf(rot);
+        const players = [];
+        for(let i=0; i<6; i++) {
+            const posIdx = (i - targetZoneIndex + 6) % 6;
+            let role = baseOrder[posIdx];
+            const zone = zones[i];
+            if ((role === 'MB1' || role === 'MB2') && [1,6,5].includes(zone)) role = 'L';
+            players.push({ role, zone });
+        }
+        return players;
+    }
+
+    function autoRotate(team) {
+        const idx = rotationSequence.indexOf(state[team].rot);
+        state[team].rot = rotationSequence[(idx + 1) % 6]; 
+        playSound(350, 'triangle', 0.1); render(team);
+    }
+
+    function toggleAllHighlights(team) {
+        const allActive = rolesList.every(r => state[team].highlights.has(r));
+        if (allActive) state[team].highlights.clear();
+        else rolesList.forEach(r => state[team].highlights.add(r));
+        playSound(700, 'sine', 0.1); render(team);
+    }
+
+    function render(team) {
+        const container = document.getElementById(`${team}-layer`);
+        container.innerHTML = '';
+        
+        getFormation(state[team].rot).forEach(p => {
+            const el = document.createElement('div');
+            let colorClass = "";
+            if (p.role === 'S') colorClass = "bg-black text-orange-400";
+            else if (p.role.includes('WS')) colorClass = "bg-blue-600 text-white";
+            else if (p.role.includes('MB')) colorClass = "bg-green-700 text-white";
+            else if (p.role === 'O') colorClass = "bg-red-700 text-white";
+            else if (p.role === 'L') colorClass = "bg-white text-black";
+
+            const isHigh = state[team].highlights.has(p.role);
+            el.className = `player-node absolute ${colorClass} ${isHigh ? 'active-highlight' : ''}`;
+            el.style.left = `${coords[p.zone].x}%`; el.style.top = `${coords[p.zone].y}%`;
+            el.style.transform = 'translate(-50%, -50%)';
+
+            el.onclick = () => {
+                if (state[team].highlights.has(p.role)) state[team].highlights.delete(p.role);
+                else state[team].highlights.add(p.role);
+                playSound(880, 'sine', 0.05); render(team);
+            };
+
+            el.oncontextmenu = (e) => {
+                e.preventDefault();
+                if (el.querySelector('input')) return;
+                const input = document.createElement('input');
+                input.className = 'name-edit-input';
+                input.value = playerNames[team][p.role] || '';
+                if(team === 'top') {
+                    input.style.transform = 'translateY(-50%) rotate(180deg)';
+                    input.style.left = 'auto'; input.style.right = '80px';
+                }
+                el.appendChild(input);
+                input.focus();
+                input.onblur = () => { playerNames[team][p.role] = input.value.toUpperCase(); render(team); };
+                input.onkeydown = (ke) => { if(ke.key === 'Enter') input.blur(); };
+            };
+
+            const txt = document.createElement('span');
+            txt.innerText = p.role;
+            if(team === 'top') txt.style.transform = 'rotate(180deg)';
+            el.appendChild(txt);
+
+            if (playerNames[team][p.role]) {
+                const label = document.createElement('div');
+                label.className = 'player-label';
+                label.innerText = playerNames[team][p.role];
+                if(team === 'top') {
+                    label.style.left = "auto"; label.style.right = "80px";
+                    label.style.transform = 'translateY(-50%) rotate(180deg)';
+                }
+                el.appendChild(label);
+            }
+            container.appendChild(el);
+        });
+        updateUI(team);
+    }
+
+    function updateUI(team) {
+        document.querySelectorAll(`#rot-grid-${team} button`).forEach(btn => {
+            const isActive = state[team].rot == btn.innerText.substring(1);
+            btn.className = `w-full flex-1 min-h-[30px] text-[18px] font-black rounded-lg transition-all ${isActive ? (team === 'bottom' ? 'bg-orange-500 text-white' : 'bg-slate-500 text-white') : 'glass-panel text-slate-500 hover:bg-white/5'}`;
+        });
+        document.querySelectorAll(`#pos-grid-${team} button`).forEach(btn => {
+            const isHigh = state[team].highlights.has(btn.innerText);
+            btn.className = `w-full flex-1 min-h-[26px] text-[18px] font-black rounded-lg transition-all ${isHigh ? 'bg-yellow-400 text-black' : 'glass-panel text-slate-600 hover:bg-white/5'}`;
+        });
+    }
+
+    function initUI() {
+        ['top', 'bottom'].forEach(team => {
+            rotationSequence.forEach(r => {
+                const btn = document.createElement('button'); btn.innerText = `B${r}`;
+                btn.onclick = () => { state[team].rot = r; playSound(440, 'sine', 0.1); render(team); };
+                document.getElementById(`rot-grid-${team}`).appendChild(btn);
+            });
+            rolesList.forEach(p => {
+                const btn = document.createElement('button'); btn.innerText = p;
+                btn.onclick = () => {
+                    if (state[team].highlights.has(p)) state[team].highlights.delete(p);
+                    else state[team].highlights.add(p);
+                    playSound(600, 'sine', 0.05); render(team);
+                };
+                document.getElementById(`pos-grid-${team}`).appendChild(btn);
+            });
+        });
+    }
+
+    document.getElementById('master-mute-control').onclick = function() {
+        isMuted = !isMuted;
+        document.getElementById('mute-dot').style.fill = isMuted ? "#475569" : "#22c55e";
+    };
+
+    // FUNCIÓN DE CAPTURA OPTIMIZADA PARA CORREGIR DESPLAZAMIENTO Y ELEMENTOS VISUALES
+    async function performCapture(element, fileName) {
+        const canvas = await html2canvas(element, {
+            scale: 2,
+            backgroundColor: "#000000",
+            useCORS: true,
+            allowTaint: true,
+            logging: false,
+            // Forzamos el renderizado de sombras y gradientes CSS complejos
+            onclone: (clonedDoc) => {
+                const net = clonedDoc.querySelector('.volleyball-net');
+                if (net) net.style.opacity = "1";
+            }
+        });
+        const link = document.createElement('a');
+        link.download = fileName;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+    }
+
+    function exportPart(id) {
+        const area = document.getElementById(`capture-${id}`);
+        const fileName = id === 'bottom' ? 'bot' : id;
+        performCapture(area, `team_${fileName}.png`);
+    }
+
+async function exportCapture() {
+    // CAMBIO: Apuntamos solo al elemento del campo (id="court-canvas")
+    const area = document.getElementById('court-canvas'); 
+    
+    const canvas = await html2canvas(area, {
+        scale: 2,           // Mantiene la alta resolución
+        backgroundColor: '#000000',
+        useCORS: true,
+        allowTaint: true,
+        logging: false
+    });
+    
+    const link = document.createElement('a');
+    link.download = `court_full.png`;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+}
+
+    initUI(); render('top'); render('bottom');
+</script>
+</body>
+</html>
