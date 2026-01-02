@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Volley165 v8.13</title>
+    <title>Volley165 v8.14</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@700&family=Inter:wght@400;900&display=swap" rel="stylesheet">
@@ -97,6 +97,7 @@
             font-size: 22px; font-weight: 900; cursor: pointer;
             width: 85px; height: 85px;
             box-shadow: 0 6px 12px rgba(0,0,0,0.5);
+            -webkit-print-color-adjust: exact;
             z-index: 50;
         }
 
@@ -107,6 +108,7 @@
 /* --- NUEVAS ETIQUETAS DE NOMBRE "GLASSMOPRHISM V8" --- */
 /* --- ESTILO BASE (Tu código original con ajustes de posicionamiento) --- */
 .player-label, .name-edit-input {
+    z-index: 150 !important;
     position: absolute !important;
     top: 50% !important;
     left: 50% !important; /* Empezamos desde el centro del jugador */
@@ -133,6 +135,11 @@
     width: 120px !important; 
     justify-content: flex-start !important;
 
+}
+/* Evitar que el resplandor del cristal ensucie la foto */
+#court-canvas {
+    backdrop-filter: none !important;
+    background-color: #020617 !important;
 }
 
 /* --- LÓGICA DE ROTACIÓN Y POSICIÓN --- */
@@ -165,21 +172,38 @@
     scale: 1.1 !important;
 }
 
-        .libero-hybrid {
-            background: linear-gradient(to bottom, #ffffff 50%, var(--mb-green) 50%) !important;
-            color: #000 !important;
-        }
-        #top-layer .libero-hybrid {
-            background: linear-gradient(to top, #ffffff 50%, var(--mb-green) 50%) !important;
-        }
-
         .active-highlight {
             background-color: var(--highlight-yellow) !important;
             color: #000 !important;
             z-index: 100;
-            transform: translate(-50%, -50%) scale(1.1) !important;
+            transform: translate(-50%, -50%) scale(1.05) !important;
         }
-        .active-highlight.diamond { transform: translate(-50%, -50%) rotate(45deg) scale(1.0) !important; }
+        .active-highlight.diamond { transform: translate(-50%, -50%) rotate(45deg) scale(0.95) !important; }
+
+/* --- LÓGICA LÍBERO HÍBRIDO --- */
+
+/* 1. Estado Apagado (Blanco y Verde) */
+.player-node.libero-hybrid {
+    background: linear-gradient(to bottom, #ffffff 50%, var(--mb-green) 50%) !important;
+    color: #000 !important;
+}
+
+/* 2. Estado Encendido (Blanco y Amarillo) */
+.player-node.libero-highlight-hybrid {
+    background: linear-gradient(to bottom, #ffffff 50%, var(--highlight-yellow) 50%) !important;
+    color: #000 !important;
+    z-index: 100;
+    transform: translate(-50%, -50%) scale(1.05) !important;
+}
+
+/* 3. Ajustes para el campo GRIS (Superior) - Invertimos para mantener el blanco "arriba" */
+#top-layer .player-node.libero-hybrid {
+    background: linear-gradient(to top, #ffffff 50%, var(--mb-green) 50%) !important;
+}
+
+#top-layer .player-node.libero-highlight-hybrid {
+    background: linear-gradient(to top, #ffffff 50%, var(--highlight-yellow) 50%) !important;
+}
 
 /* Hover para los jugadores en la pista */
 .player-node:hover {
@@ -189,11 +213,11 @@
 
 /* Caso especial: Si es un rombo (diamante), debe mantener su rotación al crecer */
 .player-node.diamond:hover {
-    transform: translate(-50%, -50%) rotate(45deg) scale(1.05) !important;
+    transform: translate(-50%, -50%) rotate(45deg) scale(1.0) !important;
 }
 
         .logo-on { filter: brightness(1.1) saturate(1.2) drop-shadow(0 0 8px rgba(255, 106, 0, 0.3)); opacity: 1; }
-        .logo-off { filter: brightness(0.3) grayscale(1); opacity: 0.5; }
+        .logo-off { filter: brightness(1.1) grayscale(1); opacity: 0.5; }
 
         /* --- HOVERS Y DROPDOWNS --- */
         .menu-container { position: relative; z-index: 1001; }
@@ -275,6 +299,8 @@
             background: rgba(255,255,255,0.05);
             border-radius: 12px; margin-bottom: 8px;
         }
+
+        
     </style>
 </head>
 <body class="flex flex-col">
@@ -318,18 +344,31 @@
         </div>
         <div class="flex flex-col">
             <h1 class="header-title-main title-font tracking-tighter bg-gradient-to-r from-white via-orange-300 to-orange-600 bg-clip-text text-transparent">VOLLEY165</h1>
-            <p class="header-subtitle uppercase text-slate-500 font-bold">v8.13 SUPER STRIKE</p>
+            <p class="header-subtitle uppercase text-slate-500 font-bold">v8.14 SUPER STRIKE</p>
         </div>
-        <div class="flex items-center gap-3 ml-2 pl-6 border-l border-white/10 h-12">
-            <div class="circle-btn-header info-btn text-white font-serif italic text-xl" onclick="toggleInfo(true)">i</div>
-            <div class="circle-btn-header trash-top text-slate-500" onclick="clearNames('top')" >
+        <div class="flex items-center gap-4 ml-5 pl-6 border-l border-white/10 h-12">
+            <div class="circle-btn-header info-btn text-white font-serif italic text-xl hover:scale-110 transition-all duration-200" onclick="toggleInfo(true)">i</div>
+            <div class="circle-btn-header trash-top text-slate-500 hover:scale-110 transition-all duration-200" onclick="clearNames('top')">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
             </div>
-            <div class="circle-btn-header trash-bottom" onclick="clearNames('bottom')" style="color: #f97316">
+            <div class="circle-btn-header trash-bottom hover:scale-110 transition-all duration-200" onclick="clearNames('bottom')" style="color: #f97316">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+            </div>
+            <div class="w-px h-12 bg-white/10 mx-6 ml-3 mr-3"></div> 
+            <div class="circle-btn-header flex items-center justify-center !rounded-xl w-10 h-10 text-white hover:bg-white hover:text-black cursor-pointer hover:scale-110 transition-all duration-200 shadow-lg" onclick="undo()" >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l5-5m-5 5l5 5"></path>
+                </svg>
+            </div>
+            <div class="circle-btn-header flex items-center justify-center !rounded-xl w-10 h-10 text-white hover:bg-white hover:text-black cursor-pointer hover:scale-110 transition-all duration-200 shadow-lg" onclick="redo()" >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 10h-10a8 8 0 00-8 8v2m18-10l-5-5m5 5l-5 5"></path>
+                </svg>
             </div>
         </div>
     </div>
+    
+    <div class="flex-grow"></div>
     
     <div class="flex gap-4">
         <div class="menu-container">
@@ -337,7 +376,7 @@
             <div class="dropdown-menu">
                 <button onclick="exportNames('top')" class="dropdown-item bg-slate-600">Gris</button>
                 <button onclick="exportNames('bottom')" class="dropdown-item bg-orange-600">Naranja</button>
-                <button onclick="exportNames('all')" class="dropdown-item bg-white text-black">Partido</button>
+                <button onclick="exportNames('full')" class="dropdown-item bg-white text-black">Partido</button>
             </div>
         </div>
         <div class="menu-container">
@@ -345,8 +384,7 @@
             <div class="dropdown-menu">
                 <button onclick="triggerImport('top')" class="dropdown-item bg-slate-600">Gris</button>
                 <button onclick="triggerImport('bottom')" class="dropdown-item bg-orange-600">Naranja</button>
-                <button onclick="triggerImport('all')" class="dropdown-item bg-white text-black">Partido</button>
-
+                <button onclick="triggerImport('full')" class="dropdown-item bg-white text-black">Partido</button>
             </div>
         </div>
         <div class="menu-container">
@@ -371,7 +409,7 @@
                 </div>
                 <div class="flex flex-col gap-1">
                     <button onclick="toggleAllHighlights('top')" class="column-title-btn title-btn-slate -ml-1 side-btn-hover">Highlight</button>
-                    <div id="pos-grid-top" class="flex flex-col gap-2 flex-1 justify-between"></div>
+                    <div id="pos-grid-top" class="flex flex-col gap-2 flex-1 justify-between ml-1"></div>
                 </div>
             </div>
         </div>
@@ -401,7 +439,7 @@
                 </div>
                 <div class="flex flex-col gap-1">
                     <button onclick="toggleAllHighlights('bottom')" class="column-title-btn title-btn-orange -ml-1 side-btn-hover">Highlight</button>
-                    <div id="pos-grid-bottom" class="flex flex-col gap-2 flex-1 justify-between"></div>
+                    <div id="pos-grid-bottom" class="flex flex-col gap-2 flex-1 justify-between ml-1"></div>
                 </div>
             </div>
         </div>
@@ -452,6 +490,89 @@
         }
     }
 
+ let history = [];
+let redoStack = [];
+
+function saveState() {
+    // Guardamos una "foto" completa de la situación actual
+    const snap = {
+        playerNames: JSON.parse(JSON.stringify(playerNames)),
+        state: JSON.parse(JSON.stringify(state)),
+        isMuted: isMuted
+    };
+    // Los Highlights son Sets, hay que convertirlos a Array para el JSON
+    snap.state.top.highlights = Array.from(state.top.highlights);
+    snap.state.bottom.highlights = Array.from(state.bottom.highlights);
+    
+    history.push(snap);
+    if (history.length > 50) history.shift();
+    redoStack = []; 
+}
+
+function undo() {
+    if (history.length === 0) return;
+    // Guardamos lo actual en Redo antes de volver atrás
+    const current = {
+        playerNames: JSON.parse(JSON.stringify(playerNames)),
+        state: JSON.parse(JSON.stringify(state)),
+        isMuted: isMuted
+    };
+    current.state.top.highlights = Array.from(state.top.highlights);
+    current.state.bottom.highlights = Array.from(state.bottom.highlights);
+    redoStack.push(current);
+
+    const prev = history.pop();
+    playerNames = prev.playerNames;
+    state = prev.state;
+    isMuted = prev.isMuted;
+    
+    // Restaurar los Sets
+    state.top.highlights = new Set(state.top.highlights);
+    state.bottom.highlights = new Set(state.bottom.highlights);
+    
+    // Actualizar visualmente todo
+    const logo = document.getElementById('logo-volley');
+    logo.className = isMuted ? 'logo-off' : 'logo-on';
+    
+    saveToLocalStorage();
+    render('top'); render('bottom');
+}
+
+function redo() {
+    if (redoStack.length === 0) return;
+    const current = {
+        playerNames: JSON.parse(JSON.stringify(playerNames)),
+        state: JSON.parse(JSON.stringify(state)),
+        isMuted: isMuted
+    };
+    current.state.top.highlights = Array.from(state.top.highlights);
+    current.state.bottom.highlights = Array.from(state.bottom.highlights);
+    history.push(current);
+
+    const next = redoStack.pop();
+    playerNames = next.playerNames;
+    state = next.state;
+    isMuted = next.isMuted;
+    
+    state.top.highlights = new Set(state.top.highlights);
+    state.bottom.highlights = new Set(state.bottom.highlights);
+    
+    const logo = document.getElementById('logo-volley');
+    logo.className = isMuted ? 'logo-off' : 'logo-on';
+
+    saveToLocalStorage();
+    render('top'); render('bottom');
+}
+
+// Escuchar teclado para los atajos
+document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'z') {
+        e.preventDefault(); redo();
+    } else if (e.ctrlKey && e.key.toLowerCase() === 'z') {
+        e.preventDefault(); undo();
+    }
+});
+
     function playSound(freq, type, duration, vol=0.05) {
         if (isMuted) return;
         const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
@@ -465,45 +586,99 @@
     function toggleInfo(show) { document.getElementById('info-popup').classList.toggle('active', show); }
 
     function clearNames(team) {
+        saveState();
         Object.keys(playerNames[team]).forEach(k => playerNames[team][k] = '');
         playSound(200, 'square', 0.2); saveToLocalStorage(); render(team);
     }
 
-    function exportNames(scope) {
-        let data = scope === 'all' ? playerNames : playerNames[scope];
-        const blob = new Blob([JSON.stringify(data)], {type: 'application/json'});
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `volley_names_${scope}.json`; a.click();
+function exportNames(scope) {
+    let data;
+    if (scope === 'full') {
+        data = playerNames;
+    } else {
+        // Creamos un objeto temporal con la marca de origen
+        data = {
+            isSingle: true,
+            origin: scope,
+            names: playerNames[scope]
+        };
     }
+    
+    const blob = new Blob([JSON.stringify(data)], {type: 'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    
+    const fileNameSuffix = (scope === 'bottom') ? 'bot' : scope;
+    a.download = `volley165_names_${fileNameSuffix}.json`; 
+    a.click();
+}
 
 function triggerImport(scope) { 
+    saveState();
     window.importTarget = scope; 
     document.getElementById('import-file').click(); 
 }
 
 document.getElementById('import-file').onchange = (e) => {
-    if (!e.target.files[0]) return; // Evita errores si se cancela la selección
+    if (!e.target.files[0]) return;
 
     const reader = new FileReader();
     reader.onload = () => {
         try {
             const json = JSON.parse(reader.result);
-            if (window.importTarget === 'all') {
-                playerNames = json; 
-            } else {
-                playerNames[window.importTarget] = json;
+            const target = window.importTarget;
+
+            if (target === 'full') {
+                if (json.top && json.bottom && !json.isSingle) {
+                    playerNames = json;
+                } else if (json.isSingle) {
+                    const origin = json.origin;
+                    const other = origin === 'top' ? 'bottom' : 'top';
+                    playerNames[origin] = json.names;
+                    Object.keys(playerNames[other]).forEach(role => playerNames[other][role] = '');
+                } else {
+                    playerNames.top = json;
+                    Object.keys(playerNames.bottom).forEach(role => playerNames.bottom[role] = '');
+                }
+            } 
+            else {
+                // --- LÓGICA DE RESCATE PARA CAMPOS INDIVIDUALES ---
+                const otherField = target === 'top' ? 'bottom' : 'top';
+                let dataToImport = null;
+
+                if (json.isSingle) {
+                    // Si es archivo de un solo equipo, se usa ese
+                    dataToImport = json.names;
+                } else if (json.top && json.bottom) {
+                    // Si es archivo de partido completo:
+                    // 1. Intentamos pillar el de su propio campo
+                    // 2. Si su campo está vacío (solo tiene strings vacíos), rescatamos el del otro campo
+                    const hasNames = (field) => Object.values(json[field]).some(n => n !== '');
+                    
+                    if (hasNames(target)) {
+                        dataToImport = json[target];
+                    } else if (hasNames(otherField)) {
+                        dataToImport = json[otherField];
+                    } else {
+                        dataToImport = json[target]; // Ambos vacíos, da igual
+                    }
+                } else {
+                    // Archivo viejo o plano
+                    dataToImport = json;
+                }
+
+                playerNames[target] = JSON.parse(JSON.stringify(dataToImport));
             }
             
             saveToLocalStorage(); 
             render('top'); 
             render('bottom'); 
             playSound(800, 'sine', 0.2);
-
-            // --- LA LÍNEA MÁGICA ---
-            e.target.value = ''; // Esto permite volver a importar el mismo archivo inmediatamente
+            e.target.value = ''; 
             
         } catch(err) { 
-            alert("Error al importar"); 
-            e.target.value = ''; // También limpiamos si hay error
+            alert("Error en el formato"); 
+            e.target.value = ''; 
         }
     };
     reader.readAsText(e.target.files[0]);
@@ -522,62 +697,85 @@ document.getElementById('import-file').onchange = (e) => {
     }
 
     function autoRotate(team) {
+        saveState();
         const idx = rotationSequence.indexOf(state[team].rot);
         state[team].rot = rotationSequence[(idx + 1) % 6]; 
         saveToLocalStorage(); render(team); playSound(350, 'triangle', 0.1);
     }
 
     function toggleAllHighlights(team) {
+        saveState();
         const all = rolesList.every(r => state[team].highlights.has(r));
         if (all) state[team].highlights.clear(); else rolesList.forEach(r => state[team].highlights.add(r));
         saveToLocalStorage(); render(team); playSound(700, 'sine', 0.1);
     }
 
-    function render(team) {
-        const container = document.getElementById(`${team}-layer`);
-        container.innerHTML = '';
-        getFormation(state[team].rot).forEach(p => {
-            const el = document.createElement('div');
-            const isFront = [2,3,4].includes(p.zone);
-            const isHigh = state[team].highlights.has(p.role);
+   function render(team) {
+    const container = document.getElementById(`${team}-layer`);
+    container.innerHTML = '';
+    getFormation(state[team].rot).forEach(p => {
+        const el = document.createElement('div');
+        const isFront = [2,3,4].includes(p.zone);
+        const isHigh = state[team].highlights.has(p.role);
+        const isHybrid = (p.role === 'L' && !isFront);
+
+        let finalClass = `player-node absolute ${isFront ? 'diamond' : 'rounded-node'}`;
+
+        if (isHybrid) {
+            // Caso Líbero Híbrido: Ignoramos colores de Tailwind
+            finalClass += isHigh ? " libero-highlight-hybrid" : " libero-hybrid";
+        } else {
+            // Caso Normal: Aplicamos colores estándar
             let colorClass = p.role==='S'?"bg-black text-orange-400":p.role.includes('WS')?"bg-blue-600 text-white":p.role.includes('MB')?"bg-green-700 text-white":p.role==='O'?"bg-red-700 text-white":"bg-white text-black";
-            if(p.role === 'L' && p.zone === 1 && !isHigh) colorClass = "libero-hybrid";
+            finalClass += " " + colorClass;
+            if (isHigh) finalClass += " active-highlight";
+        }
 
-            el.className = `player-node absolute ${colorClass} ${isHigh ? 'active-highlight' : ''} ${isFront ? 'diamond' : 'rounded-node'}`;
-            el.style.left = `${coords[p.zone].x}%`; el.style.top = `${coords[p.zone].y}%`;
-            
-            el.onclick = () => { 
-                if (state[team].highlights.has(p.role)) state[team].highlights.delete(p.role); 
-                else state[team].highlights.add(p.role); 
-                playSound(880,'sine',0.05); saveToLocalStorage(); render(team); 
-            };
+        el.className = finalClass;
+        el.style.left = `${coords[p.zone].x}%`; el.style.top = `${coords[p.zone].y}%`;
+        
+        el.onclick = () => { 
+            saveState();
+            if (state[team].highlights.has(p.role)) state[team].highlights.delete(p.role); 
+            else state[team].highlights.add(p.role); 
+            playSound(880,'sine',0.05); saveToLocalStorage(); render(team); 
+        };
 
-            el.oncontextmenu = (e) => {
-                e.preventDefault();
-                const input = document.createElement('input'); 
-                input.className = `name-edit-input ${team === 'top' ? 'top-team-input' : ''}`; 
-                input.value = playerNames[team][p.role] || '';
-                el.appendChild(input); input.focus();
-                input.onblur = () => { playerNames[team][p.role] = input.value.toUpperCase(); saveToLocalStorage(); render(team); };
-                input.onkeydown = (ke) => { if(ke.key==='Enter') input.blur(); };
-
-                input.maxLength = 8;
-            };
-
-            const txt = document.createElement('span'); txt.innerText = p.role; txt.className = isFront?'diamond-inner':'';
-            if(team==='top') txt.style.transform = `rotate(180deg) ${isFront?'rotate(-45deg)':''}`;
-            el.appendChild(txt);
-
-            if (playerNames[team][p.role]) {
-                const label = document.createElement('div'); 
-                label.className = `player-label ${team === 'top' ? 'top-team-label' : ''}`; 
-                label.innerText = playerNames[team][p.role];
-                el.appendChild(label);
-            }
-            container.appendChild(el);
-        });
-        updateUI(team);
+        el.oncontextmenu = (e) => {
+            e.preventDefault();
+            const input = document.createElement('input'); 
+            input.className = `name-edit-input ${team === 'top' ? 'top-team-input' : ''}`; 
+            input.value = playerNames[team][p.role] || '';
+            el.appendChild(input); input.focus();
+input.onblur = () => { 
+    // Comprobamos si el nombre nuevo es distinto al que ya había
+    if (playerNames[team][p.role] !== input.value.toUpperCase()) {
+        saveState(); // Solo guardamos estado si hubo cambio real
+        playerNames[team][p.role] = input.value.toUpperCase(); 
+        saveToLocalStorage(); 
+        render(team); 
+    } else {
+        // Si no cambió nada, solo renderizamos para quitar el input de la pantalla
+        render(team); 
     }
+};            input.onkeydown = (ke) => { if(ke.key==='Enter') input.blur(); };
+            input.maxLength = 12;
+        };
+
+        const txt = document.createElement('span'); txt.innerText = p.role; txt.className = isFront?'diamond-inner':'';
+        if(team==='top') txt.style.transform = `rotate(180deg) ${isFront?'rotate(-45deg)':''}`;
+        el.appendChild(txt);
+
+        if (playerNames[team][p.role]) {
+            const label = document.createElement('div'); 
+            label.className = `player-label ${team === 'top' ? 'top-team-label' : ''}`; 
+            label.innerText = playerNames[team][p.role];
+            el.appendChild(label);
+        }
+        container.appendChild(el);
+    });
+    updateUI(team);
+}
 
     function updateUI(team) {
         document.querySelectorAll(`#rot-grid-${team} button`).forEach(btn => {
@@ -596,7 +794,7 @@ document.getElementById('import-file').onchange = (e) => {
             const posGrid = document.getElementById(`pos-grid-${team}`);
             rotationSequence.forEach(r => {
                 const btn = document.createElement('button'); btn.innerText = `B${r}`;
-                btn.onclick = () => { state[team].rot = r; saveToLocalStorage(); render(team); playSound(440, 'sine', 0.1); };
+                btn.onclick = () => { saveState(); state[team].rot = r; saveToLocalStorage(); render(team); playSound(440, 'sine', 0.1); };
                 rotGrid.appendChild(btn);
             });
             rolesList.forEach(p => {
@@ -612,18 +810,64 @@ document.getElementById('import-file').onchange = (e) => {
     }
 
     document.getElementById('master-mute-control').onclick = function() {
+        saveState();
         isMuted = !isMuted; const logo = document.getElementById('logo-volley');
         if (isMuted) logo.className = 'logo-off transition-all duration-300';
         else { logo.className = 'logo-on transition-all duration-300'; playSound(600, 'sine', 0.1); }
         saveToLocalStorage();
     };
 
-    async function performCapture(el, fileName) {
-        const canvas = await html2canvas(el, { scale: 2, backgroundColor: "#000", useCORS: true });
-        const link = document.createElement('a'); link.download = fileName; link.href = canvas.toDataURL(); link.click();
+async function performCapture(el, fileName) {
+    // 1. Forzar visibilidad de nombres y limpiar antes de capturar
+    const labels = document.querySelectorAll('.player-label');
+    labels.forEach(l => l.style.opacity = "1");
+
+    try {
+        const canvas = await html2canvas(el, { 
+            scale: 3, // Alta definición
+            backgroundColor: "#000", 
+            useCORS: true,
+            allowTaint: true,
+            logging: false,
+            // Esto es clave para que no salgan cosas movidas en elementos rotados
+            onclone: (clonedDoc) => {
+                const area = clonedDoc.getElementById(el.id);
+                area.style.transform = "none";
+            }
+        });
+
+        // Descargar archivo
+        const dataUrl = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.download = fileName;
+        link.href = dataUrl;
+        link.click();
+
+        // Copiar al portapapeles
+        canvas.toBlob(async (blob) => {
+            try {
+                const item = new ClipboardItem({ "image/png": blob });
+                await navigator.clipboard.write([item]);
+                playSound(1000, 'sine', 0.1); 
+            } catch (err) {
+                console.log("Clipboard bloqueado (necesita HTTPS o permiso)");
+            }
+        });
+    } catch (error) {
+        console.error("Error:", error);
     }
-    function exportPart(id) { performCapture(document.getElementById(`capture-${id}`), `team_${id}.png`); }
-    function exportCapture() { performCapture(document.getElementById('court-canvas'), 'court_full.png'); }
+}
+
+// CAPTURA COMPLETA: Ahora solo captura el campo, sin botones
+function exportCapture() { 
+    // Usamos 'court-canvas' en lugar de 'capture-area' para eliminar las botoneras
+    performCapture(document.getElementById('court-canvas'), 'volley165_full.png'); 
+}
+
+function exportPart(id) { 
+    const namePart = (id === 'bottom') ? 'bot' : id;
+    performCapture(document.getElementById(`capture-${id}`), `volley165_pic_${namePart}.png`); 
+}
 
     loadFromLocalStorage(); initUI(); render('top'); render('bottom');
 </script>
